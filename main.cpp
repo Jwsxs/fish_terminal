@@ -60,7 +60,7 @@ void draw_screen(Fish fish, int h, int w) {
     if ((h == 0 || h == WINDOW_HEIGHT - 1) && (w == 0 || w == WINDOW_WIDTH - 1)) {
         printf("  ");
     } else if (h == 0 || h == WINDOW_HEIGHT - 1) {
-	    printf("—");
+        printf("—");
     } else if (w == 0 || w == WINDOW_WIDTH - 1) {
         printf("〡");
     } else if ((h >= fish.y - fish.height / 2 && h < fish.y + fish.height / 2) && (w >= fish.x - fish.width / 2 && w < fish.x + fish.width / 2)) {
@@ -74,11 +74,6 @@ int main() {
     Fish first_fish = Fish::create(5, 2);
     first_fish.x = 10;
     first_fish.y = 2;
-    while (1) {
-        char a;
-        std::cin >> a;
-        std::cout << a;
-    }
 
     Fish fishes[1] = {
         first_fish,
@@ -122,11 +117,17 @@ int main() {
                 case 'q':
                     running = 0;
                 break;
-                case '^[[C':
+                case 'w':
                     first_fish.y--;
                     break;
                 case 's':
                     first_fish.y++;
+                    break;
+                case 'a':
+                    first_fish.x--;
+                    break;
+                case 'd':
+                    first_fish.x++;
                     break;
             }
         }
