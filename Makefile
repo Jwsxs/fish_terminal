@@ -12,3 +12,5 @@ run:
 
 clean:
 	rm ./$(OBJ)
+
+.SILENT: run build clean
