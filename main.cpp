@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <iomanip>
 #include <cmath>
-
+#include <vector>
 #include <sys/ioctl.h>
 
 // Windows default terminal size
@@ -40,20 +40,16 @@ struct Fish {
     int x, y;
     int width, height;
 
-    Fish(int w, int h): x(0), y(0), width(w), height(h) {}
+    Fish(int w, int h): x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2), width(w), height(h) {}
 
     static Fish create(int w, int h) {
         return Fish(w, h);
     }
 
-    static void draw(Fish fish) {
-        for (int h = fish.y - fish.height / 2; h < fish.y + fish.height / 2; h++) {
-            for (int w = fish.x - fish.width / 2; w < fish.x + fish.width / 2; w++) {
-                printf("x");
-            }
-            printf("\n");
-        }
-    }
+	static void moveToTarget(Fish fish, int* target) {
+		fish.x = *target;
+		fish.y = *(target + 1);
+	}
 };
 
 void draw_screen(Fish fish, int h, int w) {
@@ -99,12 +95,15 @@ int main() {
         std::cout << "\rfish_pos: " << std::setw(2) << first_fish.x << "x " << std::setw(2) << first_fish.y << "y\n";
         if (rand() % 2 == 0 && set_target_cooldown <= 0) {
             set_target_cooldown = 10 * 1000;
-            int fish_target_x = rand() % WINDOW_WIDTH;
-            int fish_target_y = rand() % WINDOW_HEIGHT;
-            std::cout << "\rfish target: " << std::setw(2) << fish_target_x << "x " << std::setw(2) << fish_target_y << "y\n";
-
-            first_fish.x += (fish_target_x != WINDOW_WIDTH) ? (fish_target_x - first_fish.x) : WINDOW_WIDTH;
-            first_fish.y += (fish_target_y != WINDOW_HEIGHT) ? (fish_target_y - first_fish.y) : WINDOW_HEIGHT;
+			int* target;
+            *(target) = rand() % WINDOW_WIDTH;
+            *(target+1) = rand() % WINDOW_HEIGHT;
+			
+			Fish::moveToTarget(first_fish, target);
+            //first_fish.x += (fish_target_x != WINDOW_WIDTH) ? (fish_target_x - first_fish.x) : WINDOW_WIDTH;
+            //first_fish.y += (fish_target_y != WINDOW_HEIGHT) ? (fish_target_y - first_fish.y) : WINDOW_HEIGHT;
+	    	
+			std::cout << "\rfish target: " << std::setw(2) << target[0] << "x " << std::setw(2) << target[1] << "y\n";
         }
         std::cout << std::flush;
         set_target_cooldown--;
@@ -117,18 +116,6 @@ int main() {
                 case 'q':
                     running = 0;
                 break;
-                case 'w':
-                    first_fish.y--;
-                    break;
-                case 's':
-                    first_fish.y++;
-                    break;
-                case 'a':
-                    first_fish.x--;
-                    break;
-                case 'd':
-                    first_fish.x++;
-                    break;
             }
         }
     }
