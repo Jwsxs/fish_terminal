@@ -1,43 +1,12 @@
 #include <iostream>
-#include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <cstdint>
-#include <iomanip>
-#include <cmath>
+#include "process_keyboard.h"
 #include <vector>
-#include <sys/ioctl.h>
-
-#include <thread>
 #include <chrono>
+#include <thread>
 
 // Windows default terminal size
 #define WINDOW_HEIGHT 45
 #define WINDOW_WIDTH 80
-
-bool keyb_hit() {
-    termios oldt;
-
-    tcgetattr(STDIN_FILENO, &oldt);
-    termios newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
-    int oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
-
-    int ch = getchar();
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    fcntl(STDIN_FILENO, F_SETFL, oldf);
-
-    if (ch != EOF) {
-        ungetc(ch, stdin);
-        return true;
-    }
-
-    return false;
-}
 
 struct Fish {
     int x, y;
