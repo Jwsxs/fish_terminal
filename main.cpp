@@ -8,6 +8,9 @@
 #include <vector>
 #include <sys/ioctl.h>
 
+#include <thread>
+#include <chrono>
+
 // Windows default terminal size
 #define WINDOW_HEIGHT 45
 #define WINDOW_WIDTH 80
@@ -24,10 +27,10 @@ bool keyb_hit() {
     fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
 
     int ch = getchar();
-    
+
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     fcntl(STDIN_FILENO, F_SETFL, oldf);
-    
+
     if (ch != EOF) {
         ungetc(ch, stdin);
         return true;
@@ -40,77 +43,81 @@ struct Fish {
     int x, y;
     int width, height;
 
-    Fish(int w, int h): x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2), width(w), height(h) {}
+    int target_cooldown;
+    int target_x, target_y;
+
+    Fish(int w, int h):
+        x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
+        width(w), height(h),
+        target_cooldown(0),
+        target_x(x), target_y(y) {}
 
     static Fish create(int w, int h) {
         return Fish(w, h);
     }
 
-	static void moveToTarget(Fish fish, int* target) {
-		fish.x = *target;
-		fish.y = *(target + 1);
-	}
+    void processMovement() {
+        if (target_cooldown <= 0) {
+            target_cooldown = rand() % 15;
+			target_x = rand() % WINDOW_WIDTH;
+            target_y = rand() % WINDOW_HEIGHT;
+        }
+
+        if (x < target_x) x++;
+        else if (x > target_x) x--;
+
+        if (y < target_y) y++;
+        else if (y > target_y) y--;
+
+        target_cooldown--;
+    }
 };
 
-void draw_screen(Fish fish, int h, int w) {
-    if ((h == 0 || h == WINDOW_HEIGHT - 1) && (w == 0 || w == WINDOW_WIDTH - 1)) {
-        printf("  ");
-    } else if (h == 0 || h == WINDOW_HEIGHT - 1) {
-        printf("—");
-    } else if (w == 0 || w == WINDOW_WIDTH - 1) {
-        printf("〡");
-    } else if ((h >= fish.y - fish.height / 2 && h < fish.y + fish.height / 2) && (w >= fish.x - fish.width / 2 && w < fish.x + fish.width / 2)) {
-        printf("x");
-    } else {
-        printf(" ");
+char get_pixel(const Fish* fishes, int amnt, int h, int w) {
+    if ((h == 0 || h == WINDOW_HEIGHT - 1) &&  (w == 0 || w == WINDOW_WIDTH - 1)) return ' ';
+    if (h == 0 || h == WINDOW_HEIGHT - 1) return '-';
+    if (w == 0 || w == WINDOW_WIDTH - 1) return '|';
+
+    //agora vejo a pos de cada peixe
+    for (int f = 0; f < amnt; f++) {
+        const Fish& fish = fishes[f];
+
+        if (h >= fish.y - fish.height / 2 && h < fish.y + fish.height / 2 && w >= fish.x - fish.width / 2 && w < fish.x + fish.width / 2) {
+            return 'x';
+        }
     }
+    return ' ';
 }
 
 int main() {
-    Fish first_fish = Fish::create(5, 2);
-    first_fish.x = 10;
-    first_fish.y = 2;
-
-    Fish fishes[1] = {
-        first_fish,
+    std::vector<Fish> fishes = {
+        Fish::create(4, 2),
+        Fish::create(6, 3),
+        Fish::create(10, 2),
     };
 
     int running = 1;
-    
-    int set_target_cooldown = 0;
+
     while (running) {
-        std::cout << "\033[" << WINDOW_HEIGHT + 3 << "A";
+        std::string frame_buff;
+        frame_buff.reserve(WINDOW_WIDTH * WINDOW_HEIGHT); //requests the string capacity to a planned size https://cplusplus.com/reference/string/string/reserve/
+
+        std::cout << "\033[2K\033[H";
         for (int h = 0; h < WINDOW_HEIGHT; h++) {
-            for (int w = 0; w < WINDOW_WIDTH; w++) {
-                
-                /*
-                --- draw stuff on screen
-                */
-                draw_screen(first_fish, h, w);
+            for (int w = 0; w< WINDOW_WIDTH; w++) {
+                frame_buff += get_pixel(fishes.data(), fishes.size(), h, w);
             }
-            printf("\n");
+            frame_buff += '\n';
+        }
+        std::cout << frame_buff;
+
+        for (int f = 0; f < fishes.size(); f++) {
+            fishes[f].processMovement();
         }
 
-        std::cout << "\rcooldown: " << std::setw(2) << set_target_cooldown << "\n";
-        std::cout << "\rfish_pos: " << std::setw(2) << first_fish.x << "x " << std::setw(2) << first_fish.y << "y\n";
-        if (rand() % 2 == 0 && set_target_cooldown <= 0) {
-            set_target_cooldown = 10 * 1000;
-			int* target;
-            *(target) = rand() % WINDOW_WIDTH;
-            *(target+1) = rand() % WINDOW_HEIGHT;
-			
-			Fish::moveToTarget(first_fish, target);
-            //first_fish.x += (fish_target_x != WINDOW_WIDTH) ? (fish_target_x - first_fish.x) : WINDOW_WIDTH;
-            //first_fish.y += (fish_target_y != WINDOW_HEIGHT) ? (fish_target_y - first_fish.y) : WINDOW_HEIGHT;
-	    	
-			std::cout << "\rfish target: " << std::setw(2) << target[0] << "x " << std::setw(2) << target[1] << "y\n";
-        }
-        std::cout << std::flush;
-        set_target_cooldown--;
-        
         if (keyb_hit()) {
             char c = getchar();
-            
+
             switch (c) {
                 case 'Q':
                 case 'q':
@@ -118,6 +125,10 @@ int main() {
                 break;
             }
         }
+
+        // usleep(64 * 1000); // -> 15 fps //? POSIX -> LESS SAFE THAN ↓
+        std::this_thread::sleep_for(std::chrono::milliseconds(64)); //? MORE PORTABLE -> safer for portability and type safety
+        //https://stackoverflow.com/questions/48383565/usleep-vs-stdthis-threadsleep-for-when-write-read-on-a-linux-serial-port
     }
 
     return 0;
