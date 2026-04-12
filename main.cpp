@@ -2,12 +2,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
-#include <cstdint>
-#include <iomanip>
-#include <cmath>
 #include <vector>
-#include <sys/ioctl.h>
-
 #include <thread>
 #include <chrono>
 
@@ -99,16 +94,29 @@ int main() {
     int running = 1;
 
     while (running) {
+		// ao invés de printar cada camada (tela-> peixe-> hud ou qualquer outra),
+		// já printa tudo junto, conforme é renderizado o WIDTH e HEIGHT
+		// pra isso frame_buffer,
         std::string frame_buff;
+		
+		// que então aumenta a capacidade da string pelo tamanho da tela-> width * height
         frame_buff.reserve(WINDOW_WIDTH * WINDOW_HEIGHT); //requests the string capacity to a planned size https://cplusplus.com/reference/string/string/reserve/
 
+		//limpa
         std::cout << "\033[2K\033[H";
         for (int h = 0; h < WINDOW_HEIGHT; h++) {
             for (int w = 0; w< WINDOW_WIDTH; w++) {
-                frame_buff += get_pixel(fishes.data(), fishes.size(), h, w);
-            }
+                // e adiciona os peixes
+				frame_buff += get_pixel(fishes.data(), fishes.size(), h, w);
+            	
+				//ou hud ou oq for necessário
+				/*
+				-- print_hud();
+				*/
+			}
             frame_buff += '\n';
         }
+		// ai entao printa tudo junto
         std::cout << frame_buff;
 
         for (int f = 0; f < fishes.size(); f++) {
