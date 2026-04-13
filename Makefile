@@ -1,3 +1,5 @@
+.SILENT:
+
 FLAGS = -Wall -Wextra -std=c++17 -Iinclude
 
 SRC = src
@@ -17,14 +19,15 @@ all: clean $(BIN) run
 
 $(BUILD):
 	clear
-	echo -e "Making directory \033[1m./$(BUILD)\033[0m\n"
+	echo -e "Making directory \033[1m./$(BUILD)\033[0m"
 	mkdir -p $(BUILD)
 
 $(BUILD)/%.o: $(SRC)/%.cpp | $(BUILD)
+	echo -e "Flagging source files \033[1m$< $(FLAGS)\033[0m to \033[1m$(@)\033[0m"
 	g++ $(FLAGS) -c $< -o $@
 
 $(BIN): $(OBJS)
-	echo -e "\nLinking $(OBJS) to ./$(BUILD)/$(BIN)"
+	echo -e "Linking \033[1m$(OBJS)\033[0m to \033[1m./$(BIN)\033[0m"
 	g++ $(OBJS) -o $(BIN)
 
 run: $(BIN)
@@ -34,4 +37,4 @@ run: $(BIN)
 clean:
 	rm -rf $(BUILD)
 
-.SILENT: run build clean
+#.SILENT: all $(BUILD) $(BIN)

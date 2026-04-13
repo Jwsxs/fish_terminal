@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -22,16 +24,16 @@ std::vector<char> CHARS = {
 	'8',
 };
 
-struct Game {
-};
-
 struct Fish {
 	char fish_char;
     int x, y;
     int width, height;
 
+	int fish_health;
+	int curnt_fish_health = fish_health;
+	int lose_health_cooldown = 60;
 
-    int target_cooldown;
+    int target_cooldown = 10;
     int target_x, target_y;
 
 	int money_cooldown;
@@ -42,18 +44,32 @@ struct Fish {
 		fish_char(CHARS[rand() % CHARS.size()]),
         x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
         width(w), height(h),
-        target_cooldown(0),
+		fish_health(w * 5 + h * 2),
         target_x(x), target_y(y),
-		money_cooldown(rand() % 100),
+		money_cooldown(rand() % 500),
 		last_fish(0) {}
 
     static Fish create(int w, int h) {
         return Fish(w, h);
     }
 
+	void fishHealth() {
+		if (curnt_fish_health > 0 && lose_health_cooldown <= 0) {
+			curnt_fish_health--;
+		}
+		if (curnt_fish_health > fish_health) {
+			curnt_fish_health = fish_health;
+		}
+		
+		if (lose_health_cooldown <= 0) {
+			lose_health_cooldown = 60;
+		}
+		lose_health_cooldown--;
+	}
+
     void processMovement() {
         if (target_cooldown <= 0) {
-            target_cooldown = rand() % 15;
+            target_cooldown = rand() % 90;
 			target_x = rand() % WINDOW_WIDTH;
             target_y = rand() % WINDOW_HEIGHT;
         }
@@ -73,7 +89,8 @@ struct Fish {
 			money_cooldown = rand() % 100;
 			money_amnt = rand() % 100;
 		}
-		money_cooldown--;
+
+		money_cooldown--; 
 
 		return money_amnt;
 	}
@@ -93,6 +110,18 @@ char get_pixel(const Fish* fishes, int amnt, int h, int w) {
         }
     }
     return ' ';
+}
+
+void feed_fishes(std::vector<Fish>& fishes, int fish_amnt, float* total_money) {
+	float feed_price = 1.5f;
+
+	for (int f = 0; f < fish_amnt; f++) {
+		Fish& fish = fishes[f];
+		if (*total_money >= feed_price) {
+			*total_money -= feed_price;
+			fish.curnt_fish_health += fish.fish_health / 2;
+		}
+	}
 }
 
 int main() {
@@ -136,7 +165,7 @@ int main() {
 		frame_buff += "total_money " + oss.str() + '\n';
 		frame_buff += "fish_amnt " + std::to_string(fishes.size()) + '\n';
 
-		if (fishes.size() < max_fishes) {
+		if ((int)fishes.size() < max_fishes) {
 			if (fish_spawn_cooldown <= 0) {
 				fish_spawn_cooldown = (rand() % 100);
 				fishes.push_back(Fish::create(rand() % 8 + rand() % 3 + 2, rand() % 3 + 2));
@@ -146,7 +175,11 @@ int main() {
 
 		frame_buff += "fish_spawn_cooldown " + std::to_string(fish_spawn_cooldown) + '\n';
 
-        for (int f = 0; f < fishes.size(); f++) {
+		for (int f = 0; f < (int)fishes.size(); f++) {
+			fishes[f].fishHealth();
+			
+			frame_buff += "fish " + std::to_string(f) + "'s health: " + std::to_string(fishes[f].curnt_fish_health) + "/" + std::to_string(fishes[f].fish_health) + " -> " + std::to_string(fishes[f].lose_health_cooldown) +'\n';
+
             fishes[f].processMovement();
 			total_money += fishes[f].giveMoney() / 100;
 		}
@@ -159,6 +192,10 @@ int main() {
                 case 'q':
                     running = 0;
                 break;
+
+				case ' ':
+					feed_fishes(fishes, fishes.size(), &total_money);
+				break;
             }
         }
 
