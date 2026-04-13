@@ -16,12 +16,15 @@ BIN = $(BUILD)/main
 all: clean $(BIN) run
 
 $(BUILD):
+	clear
+	echo -e "Making directory \033[1m./$(BUILD)\033[0m\n"
 	mkdir -p $(BUILD)
 
 $(BUILD)/%.o: $(SRC)/%.cpp | $(BUILD)
 	g++ $(FLAGS) -c $< -o $@
 
 $(BIN): $(OBJS)
+	echo -e "\nLinking $(OBJS) to ./$(BUILD)/$(BIN)"
 	g++ $(OBJS) -o $(BIN)
 
 run: $(BIN)
@@ -31,4 +34,4 @@ run: $(BIN)
 clean:
 	rm -rf $(BUILD)
 
-.SILENT: run clean
+.SILENT: run build clean
