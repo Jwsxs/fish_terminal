@@ -24,30 +24,39 @@ std::vector<char> CHARS = {
 	'8',
 };
 
+struct Menu {
+	bool menu_mode;
+	int selected;
+
+	int width, height;
+
+	Menu():
+		menu_mode(false),
+		width(WINDOW_WIDTH / 3), height(WINDOW_HEIGHT / 3) {}
+};
+
 struct Fish {
 	char fish_char;
     int x, y;
     int width, height;
 
 	int fish_health;
-	int curnt_fish_health = fish_health;
+	int curnt_fish_health;
 	int lose_health_cooldown = 60;
 
     int target_cooldown = 10;
     int target_x, target_y;
 
 	int money_cooldown;
-	//float money_amnt;
-	int last_fish;
-    
+
 	Fish(int w, int h):
 		fish_char(CHARS[rand() % CHARS.size()]),
         x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
         width(w), height(h),
 		fish_health(w * 5 + h * 2),
+		curnt_fish_health(fish_health),
         target_x(x), target_y(y),
-		money_cooldown(rand() % 500),
-		last_fish(0) {}
+		money_cooldown(rand() % 500) {}
 
     static Fish create(int w, int h) {
         return Fish(w, h);
@@ -60,7 +69,7 @@ struct Fish {
 		if (curnt_fish_health > fish_health) {
 			curnt_fish_health = fish_health;
 		}
-		
+
 		if (lose_health_cooldown <= 0) {
 			lose_health_cooldown = 60;
 		}
@@ -90,25 +99,30 @@ struct Fish {
 			money_amnt = rand() % 100;
 		}
 
-		money_cooldown--; 
+		money_cooldown--;
 
 		return money_amnt;
 	}
 };
 
-char get_pixel(const Fish* fishes, int amnt, int h, int w) {
-    if ((h == 0 || h == WINDOW_HEIGHT - 1) &&  (w == 0 || w == WINDOW_WIDTH - 1)) return ' ';
-    if (h == 0 || h == WINDOW_HEIGHT - 1) return '-';
-    if (w == 0 || w == WINDOW_WIDTH - 1) return '|';
-
+char get_pixel(Menu* menu, const std::vector<Fish>& fishes, int amnt, int h, int w) {
     //agora vejo a pos de cada peixe
-    for (int f = 0; f < amnt; f++) {
-        const Fish& fish = fishes[f];
+	if ((h == 0 || h == WINDOW_HEIGHT - 1) &&  (w == 0 || w == WINDOW_WIDTH - 1)) return ' ';
+	if (h == 0 || h == WINDOW_HEIGHT - 1) return '-';
+	if (w == 0 || w == WINDOW_WIDTH - 1) return '|';
 
+	for (const Fish& fish : fishes) {
         if (h >= fish.y - fish.height / 2 && h < fish.y + fish.height / 2 && w >= fish.x - fish.width / 2 && w < fish.x + fish.width / 2) {
             return fish.fish_char;
         }
     }
+
+	if (menu->menu_mode) {
+		if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) &&  (w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width)) return ' ';
+		if (h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) return '-';
+		if (w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width) return '|';
+	}
+
     return ' ';
 }
 
@@ -127,8 +141,10 @@ void feed_fishes(std::vector<Fish>& fishes, int fish_amnt, float* total_money) {
 int main() {
 	srand(time(NULL));
 
+	Menu menu;
+
 	float total_money = 0.0f;
-	
+
 	int max_fishes = 10;
 	int fish_spawn_cooldown = 10;
 
@@ -141,7 +157,7 @@ int main() {
 		// já printa tudo junto, conforme é renderizado o WIDTH e HEIGHT
 		// pra isso frame_buffer,
         std::string frame_buff;
-		
+
 		// que então aumenta a capacidade da string pelo tamanho da tela-> width * height
         frame_buff.reserve(WINDOW_WIDTH * WINDOW_HEIGHT); //requests the string capacity to a planned size https://cplusplus.com/reference/string/string/reserve/
 
@@ -150,8 +166,8 @@ int main() {
         for (int h = 0; h < WINDOW_HEIGHT; h++) {
             for (int w = 0; w< WINDOW_WIDTH; w++) {
                 // e adiciona os peixes
-				frame_buff += get_pixel(fishes.data(), fishes.size(), h, w);
-            	
+				frame_buff += get_pixel(&menu, fishes, fishes.size(), h, w);
+
 				//ou hud ou oq for necessário
 				/*
 				-- print_hud();
@@ -168,7 +184,7 @@ int main() {
 		if ((int)fishes.size() < max_fishes) {
 			if (fish_spawn_cooldown <= 0) {
 				fish_spawn_cooldown = (rand() % 100);
-				fishes.push_back(Fish::create(rand() % 8 + rand() % 3 + 2, rand() % 3 + 2));
+				fishes.push_back(Fish::create(rand() % 10 + 2, rand() % 4 + 2));
 			}
 			fish_spawn_cooldown--;
 		}
@@ -177,7 +193,7 @@ int main() {
 
 		for (int f = 0; f < (int)fishes.size(); f++) {
 			fishes[f].fishHealth();
-			
+
 			frame_buff += "fish " + std::to_string(f) + "'s health: " + std::to_string(fishes[f].curnt_fish_health) + "/" + std::to_string(fishes[f].fish_health) + " -> " + std::to_string(fishes[f].lose_health_cooldown) +'\n';
 
             fishes[f].processMovement();
@@ -192,6 +208,11 @@ int main() {
                 case 'q':
                     running = 0;
                 break;
+
+				case 'M':
+				case 'm':
+					menu.menu_mode = !menu.menu_mode;
+				break;
 
 				case ' ':
 					feed_fishes(fishes, fishes.size(), &total_money);
