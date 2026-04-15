@@ -19,14 +19,14 @@
 #define WINDOW_HEIGHT 45
 #define WINDOW_WIDTH 120 // 75
 
-std::vector<char> CHARS = {
-	'x',
-	'o',
-	'a',
-	'e',
-	'c',
-	'0',
-	'8',
+std::vector<std::string> CHARS = {
+	"x",
+	"o",
+	"a",
+	"e",
+	"c",
+	"0",
+	"8",
 };
 
 struct Menu {
@@ -47,12 +47,13 @@ struct Menu {
 };
 
 struct Fish {
-	char fish_char;
+	std::string fish_char;
+	int color;
 	int x, y;
     	int width, height;
 
 	int fish_health;
-	int curnt_fish_health;
+	int curnt_health;
 	int lose_health_cooldown = 60;
 
     	int target_cooldown = 10;
@@ -62,10 +63,11 @@ struct Fish {
 
 	Fish(int w, int h):
 		fish_char(CHARS[rand() % CHARS.size()]),
+		color(90 + rand() % 8),
         	x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
         	width(w), height(h),
 		fish_health(w * 5 + h * 2),
-		curnt_fish_health(fish_health),
+		curnt_health(fish_health),
         	//target_x(x), target_y(y),
 		money_cooldown(rand() % 500) {}
 
@@ -74,11 +76,11 @@ struct Fish {
     	}
 
 	void fishHealth() {
-		if (curnt_fish_health > 0 && lose_health_cooldown <= 0) {
-			curnt_fish_health--;
+		if (curnt_health > 0 && lose_health_cooldown <= 0) {
+			curnt_health--;
 		}
-		if (curnt_fish_health > fish_health) {
-			curnt_fish_health = fish_health;
+		if (curnt_health > fish_health) {
+			curnt_health = fish_health;
 		}
 
 		if (lose_health_cooldown <= 0) {
@@ -121,23 +123,27 @@ struct Fish {
 	}
 };
 
-char getPixel(Menu* menu, const std::vector<Fish>& fishes, int h, int w) {
-    	if ((h == 0 || h == WINDOW_HEIGHT - 1) &&  (w == 0 || w == WINDOW_WIDTH - 1)) return ' ';
-	if (h == 0 || h == WINDOW_HEIGHT - 1) return '-';
-	if (w == 0 || w == WINDOW_WIDTH - 1) return '|';
+std::string getPixel(Menu* menu, const std::vector<Fish>& fishes, int h, int w) {
+	// https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
+	// deus abencoe
+
+    	if ((h == 0 || h == WINDOW_HEIGHT - 1) &&  (w == 0 || w == WINDOW_WIDTH - 1)) return " ";
+	if (h == 0 || h == WINDOW_HEIGHT - 1) return "-";
+	if (w == 0 || w == WINDOW_WIDTH - 1) return "|";
 
 	//agora vejo a pos de cada peixe
 	for (const auto& fish : fishes) {
+		std::string colored_char = ("\033[44m\033[1;" + std::to_string(fish.color) + "m" + fish.fish_char + "\033[0m");
+
        		if (h >= fish.y - fish.height / 2 && h < fish.y + fish.height / 2 && w >= fish.x - fish.width / 2 && w < fish.x + fish.width / 2) {
 			if (menu->menu_mode) {
 				// check if fish "sprite" is at border of menu -> without it, fish is getting rendered above the menu
-				if ((h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height) && (w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width)) return ' ';
-				else if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) && (w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width)) return '-';
-				else if ((w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width) && (h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height)) return '|';
-				else return fish.fish_char;
+				if ((h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height) && (w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width)) return "\033[40m \033[0m";
+				else if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) && (w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width)) return "-";
+				else if ((w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width) && (h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height)) return "|";
+				else return colored_char;
 			} else {
-				//TODO: pintar caractere de acordo com fish.curnt_fish_health;
-				return fish.fish_char;
+				return colored_char;
 			}
         	}
     	}
@@ -145,15 +151,14 @@ char getPixel(Menu* menu, const std::vector<Fish>& fishes, int h, int w) {
 	//draw menu
 	if (menu->menu_mode) {
 		//TODO: um menu decente
-		if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) && (w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width)) return ' ';
-		else if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) && (w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width)) return '-';
-		else if ((w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width) && (h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height)) return '|';
+		if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) && (w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width)) return "\033[40m \033[0m";
+		else if ((h == WINDOW_HEIGHT / 2 - menu->height || h == WINDOW_HEIGHT / 2 + menu->height) && (w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width)) return "-";
+		else if ((w == WINDOW_WIDTH / 2 - menu->width || w == WINDOW_WIDTH / 2 + menu->width) && (h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height)) return "|";
+		else if ((w > WINDOW_WIDTH / 2 - menu->width && w < WINDOW_WIDTH / 2 + menu->width) && (h > WINDOW_HEIGHT / 2 - menu->height && h < WINDOW_HEIGHT / 2 + menu->height)) return "\033[100m \033[0m";
 	}
 
-	return ' ';
+	return "\033[44m \033[0m";
 }
-
-//TODO: se tem a funcao pra alimentar tem q ter a de matar tbm ne
 
 // void checkFishHealth() {}
 
@@ -163,9 +168,9 @@ void feed_fishes(std::vector<Fish>& fishes, int fish_amnt, float* total_money) {
 	// alimenta de acordo com o peixe em ordem de chegada, feature o.o
 	for (int f = 0; f < fish_amnt; f++) {
 		Fish& fish = fishes[f];
-		if (*total_money >= feed_price && fish.curnt_fish_health < fish.fish_health) {
+		if (*total_money >= feed_price && fish.curnt_health < fish.fish_health) {
 			*total_money -= feed_price;
-			fish.curnt_fish_health += fish.fish_health / 2;
+			fish.curnt_health += fish.fish_health / 2;
 		}
 	}
 }
@@ -211,12 +216,12 @@ int main() {
 
 		std::ostringstream oss;
 		oss << std::fixed << std::setprecision(2) << total_money;
-		frame_buff += "total_money " + oss.str() + '\n';
+		frame_buff += "total_money \033[32m" + oss.str() + "\033[0m" + '\n';
 		// frame_buff += "fish_amnt " + std::to_string(fishes.size()) + '\n';
 
 		if ((int)fishes.size() < max_fishes) {
 			if (fish_spawn_cooldown <= 0) {
-				fish_spawn_cooldown = (rand() % 100) * 10;
+				fish_spawn_cooldown = (rand() % 1) * 10;
 				fishes.push_back(Fish::create(rand() % 10 + 2, rand() % 4 + 2));
 			}
 			fish_spawn_cooldown--;
@@ -232,16 +237,8 @@ int main() {
             		fish.processMovement();
 			total_money += fish.giveMoney() / 100;
 		}
-
-		fishes.erase(
-			std::remove_if(
-				fishes.begin(),
-				fishes.end(),
-				[] (const Fish& f) {
-					return f.curnt_fish_health <= 0;
-				}),
-			fishes.end()
-		);
+		
+		fishes.erase(std::remove_if(fishes.begin(), fishes.end(), [] (const Fish& f) { return f.curnt_health <= 0; }), fishes.end());
 
         	if (keyb_hit()) {
             		char c = getchar();
