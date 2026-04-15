@@ -4,4 +4,4 @@
 *.exe
 *.bin
 
-.vscode/*
+/.vscode/*
