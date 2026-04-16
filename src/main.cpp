@@ -140,10 +140,16 @@ int main() {
        		char c = getchar();
        		if (menu.menu_mode) {
     			switch (c) {
+    			    case 'M':
+    			    case 'm':
+    			        menu.menu_mode = !menu.menu_mode;
+    			    break;
+
     				case 'S':
     				case 's':
     					menu.selected++;
     				break;
+
     				case 'W':
     				case 'w':
     				    menu.selected--;
@@ -165,14 +171,9 @@ int main() {
     		    }
 			} else {
 			    switch (c) {
-    	   			case 'Q':
-        			case 'q':
-        				running = 0;
-        			break;
-
         			case 'M':
         			case 'm':
-        				menu.menu_mode = !menu.menu_mode;
+        			    menu.menu_mode = !menu.menu_mode;
         			break;
 
         			case ' ':
