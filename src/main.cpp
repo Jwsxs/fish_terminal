@@ -5,6 +5,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <random>
 
 #include "process_keyboard.h"
 #include "fishes.h"
@@ -14,6 +15,7 @@
 std::string frame_buffer[WINDOW_HEIGHT][WINDOW_WIDTH];
 
 void clear_framebuffer() {
+    //system("clear");
     std::cout << "\033[1H";
 }
 
@@ -37,6 +39,41 @@ void draw_fishes(std::vector<Fish>& fishes) {
     }
 }
 
+void draw_menu(Menu& menu) {
+    int i = 0;
+    for (int h = 0; h < WINDOW_HEIGHT; h++) {
+        for (int w = 0; w < WINDOW_WIDTH; w++) {
+            if ((h == WINDOW_HEIGHT / 2 - menu.height || h == WINDOW_HEIGHT / 2 + menu.height - 1) && (w >= WINDOW_WIDTH / 2 - menu.width && w <= WINDOW_WIDTH / 2 + menu.width)) frame_buffer[h][w] = "-";
+            else if ((w == WINDOW_WIDTH / 2 - menu.width || w == WINDOW_WIDTH / 2 + menu.width) && (h > WINDOW_HEIGHT / 2 - menu.height && h < WINDOW_HEIGHT / 2 + menu.height)) frame_buffer[h][w] = "|";
+            else if (w > WINDOW_WIDTH / 2 - menu.width && w < WINDOW_WIDTH / 2 + menu.width && h > WINDOW_HEIGHT / 2 - menu.height && h < WINDOW_HEIGHT / 2 + menu.height) frame_buffer[h][w] = " ";
+        }
+    }
+    for (const auto& opt: menu.options) {
+        for (int c = 0; c < (int)opt.size(); c++) {
+            frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 + c] = opt[c];
+        }
+
+        if (i == menu.selected) {
+            frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = ">";
+        } else {
+            frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = " ";
+        }
+
+        i++;
+    }
+/*
+    for (int h = 0; h < WINDOW_HEIGHT; h++) {
+        for (int w = 0; w < WINDOW_WIDTH; w++) {
+            int i = 0;
+            for (const auto& opt: menu.options) {
+                frame_buffer[WINDOW_HEIGHT / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2] = opt;
+                i++;
+            }
+        }
+    }
+*/
+}
+
 void render_framebuffer() {
     for (int h = 0; h < WINDOW_HEIGHT; h++) {
         for (int w = 0; w < WINDOW_WIDTH; w++) {
@@ -47,8 +84,8 @@ void render_framebuffer() {
 }
 
 int main() {
-	srand(time(NULL));
-
+    std::random_device dev;
+    std::mt19937 rng(dev());
 	Menu menu;
 
 	float total_money = 0.0f;
@@ -76,12 +113,16 @@ int main() {
     	 * DRAW_MENU(); // -> SE TIVER ON
        	 */
 
+       	if (menu.menu_mode) draw_menu(menu);
+
     	render_framebuffer();
 
     	if ((int)fishes.size() < max_fishes) {
     		if (fish_spawn_cooldown <= 0) {
     			fish_spawn_cooldown = (rand() % 1) * 10;
-    			fishes.push_back(Fish::create(rand() % 10 + 2, rand() % 4 + 2));
+    			std::uniform_int_distribution<std::mt19937::result_type> rw(2, 10);
+    			std::uniform_int_distribution<std::mt19937::result_type> rh(2, 6);
+    			fishes.push_back(Fish::create(rw(rng), rh(rng)));
     		}
     		fish_spawn_cooldown--;
     	}
@@ -97,31 +138,50 @@ int main() {
 
     	if (keyb_hit()) {
        		char c = getchar();
-
-       		switch (c) {
-    			case 'Q':
-    			case 'q':
-    				running = 0;
-    			break;
-
-    			case 'M':
-    			case 'm':
-    				menu.menu_mode = !menu.menu_mode;
-    			break;
-
-    			case ' ':
-    				feed_fishes(fishes, total_money);
-    			break;
-       		}
-
-    		if (menu.menu_mode) {
+       		if (menu.menu_mode) {
     			switch (c) {
     				case 'S':
     				case 's':
     					menu.selected++;
     				break;
+    				case 'W':
+    				case 'w':
+    				    menu.selected--;
+    				break;
+
+    				case ' ':
+    				    switch (menu.selected) {
+    				        case 0:
+    				            menu.menu_mode = !menu.menu_mode;
+    				        break;
+    				        case 1: //Configs
+    				        case 2: //Sobre
+    				        break;
+    				        case 3:
+    				            running = 0;
+    				        break;
+    				    }
+    				break;
+    		    }
+			} else {
+			    switch (c) {
+    	   			case 'Q':
+        			case 'q':
+        				running = 0;
+        			break;
+
+        			case 'M':
+        			case 'm':
+        				menu.menu_mode = !menu.menu_mode;
+        			break;
+
+        			case ' ':
+        				feed_fishes(fishes, total_money);
+        			break;
     			}
-    		}
+    	    }
+    		if (menu.selected < 0) menu.selected = 0;
+    		if (menu.selected >= (int)menu.options.size() - 1) menu.selected = menu.options.size() - 1;
     	}
     	// ai entao printa tudo junto
         //std::cout << frame_buff;

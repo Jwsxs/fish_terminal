@@ -13,9 +13,9 @@ std::vector<std::string> CHARS = {
 Fish::Fish(int w, int h):
 	fish_char(CHARS[rand() % CHARS.size()]),
 	x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
-    width(w), height(h),
-    fish_health(10),
-	curnt_health(fish_health),
+	width(w), height(h),
+	fish_health(10),
+    curnt_health(fish_health),
    	//target_x(x), target_y(y),
 	money_cooldown(rand() % 500) {
 	// evita que a cor do peixe seja igual a da agua (104)
