@@ -10,6 +10,7 @@ public:
 	std::string fish_char;
 	int color;
 	int x, y;
+	float dx, dy;
     int width, height;
 	int fish_health;
 	int curnt_health;

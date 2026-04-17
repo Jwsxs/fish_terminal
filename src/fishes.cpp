@@ -13,6 +13,7 @@ std::vector<std::string> CHARS = {
 Fish::Fish(int w, int h):
 	fish_char(CHARS[rand() % CHARS.size()]),
 	x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
+	dx(0), dy(0),
 	width(w), height(h),
 	fish_health(10),
     curnt_health(fish_health),
@@ -35,10 +36,35 @@ void Fish::fishLoseHealth() {
 	}
 
 	if (lose_health_cooldown <= 0) {
-		lose_health_cooldown = rand() % 90 + 30;
+		lose_health_cooldown = rand() % 90 + 100;
 	}
 	lose_health_cooldown--;
 }
+
+/*
+void Fish::processMovement() {
+    if (target_cooldown <= 0) {
+        target_cooldown = rand() % 90;
+        target_x = rand() % WINDOW_WIDTH;
+        target_y = rand() % WINDOW_HEIGHT;
+    }
+
+    dx = (rand() % 3 - 1) * 0.1;
+    dy = (rand() % 3 - 1) * 0.1;
+
+    x += dx;
+    y += dy;
+
+    if (x < width) x = width;
+    if (x > WINDOW_WIDTH - width) x = WINDOW_WIDTH - width;
+
+    if (y < height) y = height;
+    if (y > WINDOW_HEIGHT - height) y = WINDOW_HEIGHT - height;
+
+    //x += dx;
+    //y += sin(time * x) * 0.2;
+}
+*/
 
 void Fish::processMovement() {
 	if (target_cooldown <= 0) {
@@ -54,9 +80,9 @@ void Fish::processMovement() {
 	else if (y > target_y) y--;
 
 	if (x < width) x = width;
-	else if (x >= WINDOW_WIDTH - width) x = WINDOW_WIDTH - width;
+	else if (x > WINDOW_WIDTH - width) x = WINDOW_WIDTH - width;
 	else if (y < height) y = height;
-	else if (y >= WINDOW_HEIGHT - height) y = WINDOW_HEIGHT - height;
+	else if (y > WINDOW_HEIGHT - height) y = WINDOW_HEIGHT - height;
 
 	target_cooldown--;
 }
