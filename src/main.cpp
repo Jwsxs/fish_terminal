@@ -7,6 +7,8 @@
 #include <thread>
 #include <random>
 
+// #include <format>
+
 //set config file for some global vars
 #include "conf.h"
 
@@ -17,9 +19,18 @@
 
 std::string frame_buffer[WINDOW_HEIGHT][WINDOW_WIDTH];
 
+struct BubbleText {
+	int x, y;
+	std::string text;
+
+	BubbleText(int x, int y, std::string text):
+		x(x), y(y),
+		text(text) {}
+};
+
 int main() {
-    std::random_device dev;
-    std::mt19937 rng(dev());
+	std::random_device dev;
+	std::mt19937 rng(dev());
 	Menu menu;
 
 	float total_money = 0.0f;
@@ -27,100 +38,110 @@ int main() {
 	int max_fishes = 10;
 	int fish_spawn_cooldown = 10;
 
-  	std::vector<Fish> fishes;
+	std::vector<Fish> fishes;
 
-   	int running = 1;
+	int running = 1;
 
 	while (running) {
-	    //nas versões passadas fazia diferente:
-	    /*
-	    -- analisava cada pixel, e ai pintava de acordo com o que estava no local
-	    -- por mais que pareca desgastante o mais otimizado é renderização de cada camada por si só
-	    */
+		//nas versões passadas fazia diferente:
+		/*
+		-- analisava cada pixel, e ai pintava de acordo com o que estava no local
+		-- por mais que pareca desgastante o mais otimizado é renderização de cada camada por si só
+		*/
 
-	    clear_framebuffer();
-	    draw_background();
-	    draw_fishes(fishes);
+		clear_framebuffer();
+		draw_background();
 
-       	if (menu.menu_mode) draw_menu(menu);
+		if ((int)fishes.size() < max_fishes) {
+			if (fish_spawn_cooldown <= 0) {
+				fish_spawn_cooldown = (rand() % 1) * 10;
+				std::uniform_int_distribution<std::mt19937::result_type> rw(2, 14);
+				std::uniform_int_distribution<std::mt19937::result_type> rh(2, 6);
+				fishes.push_back(Fish::create(rw(rng), rh(rng)));
+			}
+			fish_spawn_cooldown--;
+		}
 
-    	render_framebuffer();
+		draw_fishes(fishes);
 
-    	if ((int)fishes.size() < max_fishes) {
-    		if (fish_spawn_cooldown <= 0) {
-    			fish_spawn_cooldown = (rand() % 1) * 10;
-    			std::uniform_int_distribution<std::mt19937::result_type> rw(2, 14);
-    			std::uniform_int_distribution<std::mt19937::result_type> rh(2, 6);
-    			fishes.push_back(Fish::create(rw(rng), rh(rng)));
-    		}
-    		fish_spawn_cooldown--;
-    	}
+		for (auto& f: fishes) {
+			f.fishLoseHealth();
+			draw_text(f.x, f.y + 3, std::to_string(f.curnt_health) + " hp");
 
-    	for (auto& fish: fishes) {
-    		fish.fishLoseHealth();
+			f.processMovement();
 
-    		fish.processMovement();
-    		total_money += fish.giveMoney() / 100;
-    	}
+			f.money_cooldown--;
+			if (f.money_cooldown <= 0) {
+				f.last_money_given = f.giveMoney();
+				total_money += f.last_money_given;
+			}
 
-    	std::cout << "{total_money} \033[93m" << std::setw(2) << total_money << "\033[0m\n";
+			if (f.money_text) {
+				draw_text(f.tx, f.ty - f.temp_text, std::format("${:.2f}", f.last_money_given)); //std::format("${:.2f}", money_given));
 
-    	fishes.erase(std::remove_if(fishes.begin(), fishes.end(), [] (const Fish& f) { return f.curnt_health <= 0; }), fishes.end());
+				f.money_text_cooldown--;
+				f.temp_text+=.25;
 
-    	if (keyb_hit()) {
-       		char c = getchar();
-       		if (menu.menu_mode) {
-    			switch (c) {
-    			    case 'M':
-    			    case 'm':
-    			        menu.menu_mode = !menu.menu_mode;
-    			    break;
+				if (f.money_text_cooldown <= 0) {
+					f.money_text_cooldown = 30;
+					f.money_text = 0;
+				}
+			}
+		}
 
-    				case 'S':
-    				case 's':
-    					menu.selected++;
-    				break;
+		//std::cout << "{total_money} \033[93m" << std::setw(2) << total_money << "\033[0m\n";
+		draw_text(5, 2, std::format("${:.2f}", total_money));
+		fishes.erase(std::remove_if(fishes.begin(), fishes.end(), [] (const Fish& f) { return f.curnt_health <= 0; }), fishes.end());
 
-    				case 'W':
-    				case 'w':
-    				    menu.selected--;
-    				break;
+		if (keyb_hit()) {
+			char c = getchar();
 
-    				case ' ':
-    				    switch (menu.selected) {
-    				        case 0:
-    				            menu.menu_mode = !menu.menu_mode;
-    				        break;
-    				        case 1: //Configs
-    				        case 2: //Sobre
-    				        break;
-    				        case 3:
-    				            running = 0;
-    				        break;
-    				    }
-    				break;
-    		    }
+			if (c == 'M' || c == 'm') menu.menu_mode = !menu.menu_mode;
+
+			if (menu.menu_mode) {
+				switch (c) {
+					case 'S':
+					case 's':
+					menu.selected++;
+					break;
+
+					case 'W':
+					case 'w':
+					menu.selected--;
+					break;
+
+					case ' ':
+						switch (menu.selected) {
+							case 0:
+							menu.menu_mode = !menu.menu_mode;
+							break;
+							case 1: //Configs
+							case 2: //Sobre
+							break;
+							case 3:
+							running = 0;
+							break;
+						}
+					break;
+				}
 			} else {
-			    switch (c) {
-        			case 'M':
-        			case 'm':
-        			    menu.menu_mode = !menu.menu_mode;
-        			break;
+				switch (c) {
+					case ' ':
+					feed_fishes(fishes, total_money);
+					break;
+				}
+			}
+			if (menu.selected < 0) menu.selected = 0;
+			if (menu.selected >= (int)menu.options.size() - 1) menu.selected = menu.options.size() - 1;
+		}
+		// ai entao printa tudo junto
+		//std::cout << frame_buff;
 
-        			case ' ':
-        				feed_fishes(fishes, total_money);
-        			break;
-    			}
-    	    }
-    		if (menu.selected < 0) menu.selected = 0;
-    		if (menu.selected >= (int)menu.options.size() - 1) menu.selected = menu.options.size() - 1;
-    	}
-    	// ai entao printa tudo junto
-        //std::cout << frame_buff;
-
-        // usleep(64 * 1000); // -> 15 fps //? POSIX -> LESS SAFE THAN ↓
-        std::this_thread::sleep_for(std::chrono::milliseconds(64)); //? MORE PORTABLE -> safer for portability and type safety
-        //https://stackoverflow.com/questions/48383565/usleep-vs-stdthis-threadsleep-for-when-write-read-on-a-linux-serial-port
-    }
+		if (menu.menu_mode) draw_menu(menu);
+		render_framebuffer();
+		// usleep(64 * 1000); // -> 15 fps //? POSIX -> LESS SAFE THAN ↓
+		std::this_thread::sleep_for(std::chrono::milliseconds(64)); //? MORE PORTABLE -> safer for portability and type safety
+		//https://stackoverflow.com/questions/48383565/usleep-vs-stdthis-threadsleep-for-when-write-read-on-a-linux-serial-port
+	}
 	return 0;
 }

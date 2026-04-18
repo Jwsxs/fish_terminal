@@ -2,6 +2,7 @@
 #include "fishes.h"
 #include "menu.h"
 #include "render.h"
+#include "text.h"
 
 #include <iostream>
 
@@ -19,6 +20,7 @@ void draw_background() {
         }
     }
 }
+
 
 void draw_fishes(std::vector<Fish>& fishes) {
     for (int h = 0; h < WINDOW_HEIGHT; h++) {
@@ -52,6 +54,20 @@ void draw_menu(Menu& menu) {
 
         i++;
     }
+}
+
+void draw_text(int x, int y, std::string text) {
+	for (int h = 0; h < WINDOW_HEIGHT; h++) {
+		int c = 0; // get current character
+		for (int w = 0; w < WINDOW_WIDTH; w++) {
+			if ((h == y) && ((w >= x) && (w < x + text.size()))) {
+				frame_buffer[h][w] = std::string("\033[1;97m") + text[c] + "\033[0m";
+				c++;
+			} else {
+				continue;
+			}
+		}
+	}
 }
 
 void render_framebuffer() {

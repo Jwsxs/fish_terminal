@@ -18,6 +18,11 @@ public:
 	int target_cooldown;
 	int target_x, target_y;
 	int money_cooldown;
+	bool money_text;
+	float last_money_given;
+	float temp_text;
+	int tx, ty;
+	int money_text_cooldown;
 
 	Fish(int w, int h);
 	static Fish create(int w, int h);

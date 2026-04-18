@@ -1,6 +1,6 @@
 .SILENT:
 
-FLAGS = -Wall -Wextra -std=c++17 -Iinclude
+FLAGS = -Wall -Wextra -std=c++20 -Iinclude
 
 SRC = src
 BUILD = build

@@ -1,9 +1,13 @@
 #include "fishes.h"
+//#include "render.h"
 
 std::vector<std::string> CHARS = {
 	"x",
 	"o",
 	"a",
+	"p",
+	"l",
+	"m"
 	"e",
 	"c",
 	"0",
@@ -15,10 +19,11 @@ Fish::Fish(int w, int h):
 	x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
 	dx(0), dy(0),
 	width(w), height(h),
-	fish_health(10),
-    curnt_health(fish_health),
-   	//target_x(x), target_y(y),
-	money_cooldown(rand() % 500) {
+	fish_health(rand() % (w + h / 2) + 20),
+	curnt_health(fish_health),
+	//target_x(x), target_y(y),
+	money_cooldown(rand() % 500), 
+	money_text(0), money_text_cooldown(30) {
 	// evita que a cor do peixe seja igual a da agua (104)
 	do {
 		color = 100 + rand() % 8;
@@ -41,36 +46,11 @@ void Fish::fishLoseHealth() {
 	lose_health_cooldown--;
 }
 
-/*
-void Fish::processMovement() {
-    if (target_cooldown <= 0) {
-        target_cooldown = rand() % 90;
-        target_x = rand() % WINDOW_WIDTH;
-        target_y = rand() % WINDOW_HEIGHT;
-    }
-
-    dx = (rand() % 3 - 1) * 0.1;
-    dy = (rand() % 3 - 1) * 0.1;
-
-    x += dx;
-    y += dy;
-
-    if (x < width) x = width;
-    if (x > WINDOW_WIDTH - width) x = WINDOW_WIDTH - width;
-
-    if (y < height) y = height;
-    if (y > WINDOW_HEIGHT - height) y = WINDOW_HEIGHT - height;
-
-    //x += dx;
-    //y += sin(time * x) * 0.2;
-}
-*/
-
 void Fish::processMovement() {
 	if (target_cooldown <= 0) {
 		target_cooldown = rand() % 90;
-    	target_x = rand() % WINDOW_WIDTH;
-	    target_y = rand() % WINDOW_HEIGHT;
+		target_x = rand() % WINDOW_WIDTH;
+		target_y = rand() % WINDOW_HEIGHT;
 	}
 
 	if (x < target_x) x++;
@@ -88,15 +68,13 @@ void Fish::processMovement() {
 }
 
 float Fish::giveMoney() {
-	float money_amnt = 0.0f;
-	if (money_cooldown <= 0) {
-		money_cooldown = rand() % 100;
-		money_amnt = rand() % 100;
-	}
+	last_money_given = 0.0f;
+	money_cooldown = rand() % 100;
+	money_text = true;
 
-	money_cooldown--;
-
-	return money_amnt;
+	tx = x;
+	ty = y;
+	return (rand() % 100) / 100.0f;
 }
 
 void feed_fishes(std::vector<Fish>& fishes, float& total_money) {
@@ -104,9 +82,9 @@ void feed_fishes(std::vector<Fish>& fishes, float& total_money) {
 
 	// alimenta de acordo com o peixe em ordem de chegada, feature o.o
 	for (auto& f: fishes) {
-        if (total_money >= feed_price && f.curnt_health < f.fish_health) {
-            total_money -= feed_price;
-            f.curnt_health = f.fish_health / 2;
-        }
+		if (total_money >= feed_price && f.curnt_health < f.fish_health) {
+			total_money -= feed_price;
+			f.curnt_health = f.fish_health / 2;
+		}
 	}
 }
