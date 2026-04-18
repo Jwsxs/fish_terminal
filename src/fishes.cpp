@@ -84,7 +84,7 @@ void feed_fishes(std::vector<Fish>& fishes, float& total_money) {
 	for (auto& f: fishes) {
 		if (total_money >= feed_price && f.curnt_health < f.fish_health) {
 			total_money -= feed_price;
-			f.curnt_health = f.fish_health / 2;
+			f.curnt_health += f.fish_health / 2;
 		}
 	}
 }
