@@ -2,6 +2,7 @@
 #include "fishes.h"
 #include "menu.h"
 #include "render.h"
+// #include "shop.h"
 #include "text.h"
 
 #include <iostream>
@@ -21,7 +22,6 @@ void draw_background() {
     }
 }
 
-
 void draw_fishes(std::vector<Fish>& fishes) {
     for (int h = 0; h < WINDOW_HEIGHT; h++) {
         for (int w = 0; w < WINDOW_WIDTH; w++) {
@@ -33,35 +33,34 @@ void draw_fishes(std::vector<Fish>& fishes) {
 }
 
 void draw_menu(Menu& menu) {
-    int i = 0;
-    for (int h = 0; h < WINDOW_HEIGHT; h++) {
-        for (int w = 0; w < WINDOW_WIDTH; w++) {
-            if ((h == WINDOW_HEIGHT / 2 - menu.height || h == WINDOW_HEIGHT / 2 + menu.height - 1) && (w >= WINDOW_WIDTH / 2 - menu.width && w <= WINDOW_WIDTH / 2 + menu.width)) frame_buffer[h][w] = "-";
-            else if ((w == WINDOW_WIDTH / 2 - menu.width || w == WINDOW_WIDTH / 2 + menu.width) && (h > WINDOW_HEIGHT / 2 - menu.height && h < WINDOW_HEIGHT / 2 + menu.height)) frame_buffer[h][w] = "|";
-            else if (w > WINDOW_WIDTH / 2 - menu.width && w < WINDOW_WIDTH / 2 + menu.width && h > WINDOW_HEIGHT / 2 - menu.height && h < WINDOW_HEIGHT / 2 + menu.height) frame_buffer[h][w] = " ";
-        }
-    }
-    for (const auto& opt: menu.options) {
-        for (int c = 0; c < (int)opt.size(); c++) {
-            frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 + c] = opt[c];
-        }
+	int i = 0;
+	for (int h = 0; h < WINDOW_HEIGHT; h++) {
+		for (int w = 0; w < WINDOW_WIDTH; w++) {
+			if ((h == WINDOW_HEIGHT / 2 - menu.height || h == WINDOW_HEIGHT / 2 + menu.height - 1) && (w >= WINDOW_WIDTH / 2 - menu.width && w <= WINDOW_WIDTH / 2 + menu.width)) frame_buffer[h][w] = "-";
+			else if ((w == WINDOW_WIDTH / 2 - menu.width || w == WINDOW_WIDTH / 2 + menu.width) && (h > WINDOW_HEIGHT / 2 - menu.height && h < WINDOW_HEIGHT / 2 + menu.height)) frame_buffer[h][w] = "|";
+			else if (w > WINDOW_WIDTH / 2 - menu.width && w < WINDOW_WIDTH / 2 + menu.width && h > WINDOW_HEIGHT / 2 - menu.height && h < WINDOW_HEIGHT / 2 + menu.height) frame_buffer[h][w] = " ";
+		}
+	}
+	for (const auto& opt: menu.options) {
+		for (int c = 0; c < (int)opt.size(); c++) {
+			frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 + c] = opt[c];
+		}
 
-        if (i == menu.selected) {
-            frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = ">";
-        } else {
-            frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = " ";
-        }
-
-        i++;
-    }
+		if (i == menu.selected) {
+			frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = ">";
+		} else {
+			frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = " ";
+		}
+		i++;
+	}
 }
 
-void draw_text(int x, int y, std::string text) {
+void draw_text(int x, int y, std::string color, std::string text) {
 	for (int h = 0; h < WINDOW_HEIGHT; h++) {
 		int c = 0; // get current character
 		for (int w = 0; w < WINDOW_WIDTH; w++) {
-			if ((h == y) && ((w >= x) && (w < x + text.size()))) {
-				frame_buffer[h][w] = std::string("\033[1;97m") + text[c] + "\033[0m";
+			if ((h == y) && ((w >= x) && (w < x + (int)text.size()))) {
+				frame_buffer[h][w] = color + text[c] + "\033[0m";
 				c++;
 			} else {
 				continue;

@@ -7,14 +7,13 @@
 #include <thread>
 #include <random>
 
-// #include <format>
-
 //set config file for some global vars
 #include "conf.h"
 
 #include "process_keyboard.h"
 #include "fishes.h"
 #include "menu.h"
+#include "shop.h"
 #include "render.h"
 
 std::string frame_buffer[WINDOW_HEIGHT][WINDOW_WIDTH];
@@ -32,6 +31,7 @@ int main() {
 	std::random_device dev;
 	std::mt19937 rng(dev());
 	Menu menu;
+	Shop shop;
 
 	float total_money = 0.0f;
 
@@ -66,7 +66,7 @@ int main() {
 
 		for (auto& f: fishes) {
 			f.fishLoseHealth();
-			draw_text(f.x, f.y + 3, std::to_string(f.curnt_health) + " hp");
+			draw_text(f.x, f.y + 3, (f.curnt_health > f. fish_health / 2) ? "\033[1;92m" : "\033[1;91m", std::to_string(f.curnt_health) + " hp");
 
 			f.processMovement();
 
@@ -77,7 +77,7 @@ int main() {
 			}
 
 			if (f.money_text) {
-				draw_text(f.tx, f.ty - f.temp_text, std::format("${:.2f}", f.last_money_given)); //std::format("${:.2f}", money_given));
+				draw_text(f.tx, f.ty - f.temp_text, "\033[1;92m", std::format("${:.2f}", f.last_money_given)); //std::format("${:.2f}", money_given));
 
 				f.money_text_cooldown--;
 				f.temp_text+=.25;
@@ -90,24 +90,25 @@ int main() {
 		}
 
 		//std::cout << "{total_money} \033[93m" << std::setw(2) << total_money << "\033[0m\n";
-		draw_text(5, 2, std::format("${:.2f}", total_money));
+		draw_text(5, 2, "\033[1;97m", std::format("${:.2f}", total_money));
 		fishes.erase(std::remove_if(fishes.begin(), fishes.end(), [] (const Fish& f) { return f.curnt_health <= 0; }), fishes.end());
 
 		if (keyb_hit()) {
 			char c = getchar();
 
 			if (c == 'M' || c == 'm') menu.menu_mode = !menu.menu_mode;
+//			if (c == 'S' || c == 's' && !menu.menu_mode) shop.shop_mode = !shop.shop_mode;
 
 			if (menu.menu_mode) {
 				switch (c) {
 					case 'S':
 					case 's':
-					menu.selected++;
+						menu.selected++;
 					break;
 
 					case 'W':
 					case 'w':
-					menu.selected--;
+						menu.selected--;
 					break;
 
 					case ' ':
@@ -138,10 +139,13 @@ int main() {
 		//std::cout << frame_buff;
 
 		if (menu.menu_mode) draw_menu(menu);
+		//if (shop.shop_mode) draw_shop(shop);
 		render_framebuffer();
 		// usleep(64 * 1000); // -> 15 fps //? POSIX -> LESS SAFE THAN ↓
 		std::this_thread::sleep_for(std::chrono::milliseconds(64)); //? MORE PORTABLE -> safer for portability and type safety
 		//https://stackoverflow.com/questions/48383565/usleep-vs-stdthis-threadsleep-for-when-write-read-on-a-linux-serial-port
 	}
+
+	clear_framebuffer();
 	return 0;
 }
