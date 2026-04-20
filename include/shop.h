@@ -7,6 +7,11 @@ struct Shop {
 	bool shop_mode;
 	int selected;
 
+	int width, height;
+	int sidebar_width, sidebar_height;
+
+	std::vector<std::string> sidebar_options;
+
 	Shop();
 };
 

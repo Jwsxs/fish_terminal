@@ -96,8 +96,8 @@ int main() {
 		if (keyb_hit()) {
 			char c = getchar();
 
-			if (c == 'M' || c == 'm') menu.menu_mode = !menu.menu_mode;
-//			if (c == 'S' || c == 's' && !menu.menu_mode) shop.shop_mode = !shop.shop_mode;
+			if ((c == 'M' || c == 'm') && !shop.shop_mode) { menu.selected = 0; menu.menu_mode = !menu.menu_mode; };
+			if ((c == 'L' || c == 'l') && !menu.menu_mode) { shop.selected = 0; shop.shop_mode = !shop.shop_mode; };
 
 			if (menu.menu_mode) {
 				switch (c) {
@@ -114,13 +114,39 @@ int main() {
 					case ' ':
 						switch (menu.selected) {
 							case 0:
-							menu.menu_mode = !menu.menu_mode;
+								menu.menu_mode = !menu.menu_mode;
 							break;
 							case 1: //Configs
 							case 2: //Sobre
 							break;
 							case 3:
-							running = 0;
+								running = 0;
+							break;
+						}
+					break;
+				}
+			} else if (shop.shop_mode) {
+				switch (c) {
+					case 'S':
+					case 's':
+						shop.selected++;
+					break;
+
+					case 'W':
+					case 'w':
+						shop.selected--;
+					break;
+
+					case ' ':
+						switch(shop.selected) {
+							case 0: // Comprar
+							break;
+							case 1: // Vender
+							break;
+							case 2: // Upgrades
+							break;
+							case 3: // Voltar
+								shop.shop_mode = !shop.shop_mode;
 							break;
 						}
 					break;
@@ -139,7 +165,7 @@ int main() {
 		//std::cout << frame_buff;
 
 		if (menu.menu_mode) draw_menu(menu);
-		//if (shop.shop_mode) draw_shop(shop);
+		if (shop.shop_mode) draw_shop(shop);
 		render_framebuffer();
 		// usleep(64 * 1000); // -> 15 fps //? POSIX -> LESS SAFE THAN ↓
 		std::this_thread::sleep_for(std::chrono::milliseconds(64)); //? MORE PORTABLE -> safer for portability and type safety

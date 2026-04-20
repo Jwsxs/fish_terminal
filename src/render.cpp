@@ -1,9 +1,11 @@
 #include "conf.h"
+
 #include "fishes.h"
 #include "menu.h"
-#include "render.h"
-// #include "shop.h"
+#include "shop.h"
 #include "text.h"
+
+#include "render.h"
 
 #include <iostream>
 
@@ -51,6 +53,35 @@ void draw_menu(Menu& menu) {
 		} else {
 			frame_buffer[WINDOW_HEIGHT / 2 - menu.height / 2 + i][WINDOW_WIDTH / 2 - opt.size() / 2 - 1] = " ";
 		}
+		i++;
+	}
+}
+
+void draw_shop(Shop& shop) {
+	for (int h = 0; h < WINDOW_HEIGHT; h++) {
+		for (int w = 0; w < WINDOW_WIDTH; w++) {
+			//shopping area
+			if ((h == WINDOW_HEIGHT / 2 - shop.height / 2 || h == WINDOW_HEIGHT / 2 + shop.height / 2) && (w >= WINDOW_WIDTH / 2 - shop.width / 2 && w <= WINDOW_WIDTH / 2 + shop.width / 2)) frame_buffer[h][w] = "-";
+			else if ((w == WINDOW_WIDTH / 2 - shop.width / 2|| w == WINDOW_WIDTH / 2 + shop.width / 2) && (h > WINDOW_HEIGHT / 2 - shop.height / 2 && h < WINDOW_HEIGHT / 2 + shop.height / 2)) frame_buffer[h][w] = "|";
+			else if (w > WINDOW_WIDTH / 2 - shop.width / 2 && w < WINDOW_WIDTH / 2 + shop.width / 2 && h > WINDOW_HEIGHT / 2 - shop.height / 2 && h < WINDOW_HEIGHT / 2 + shop.height / 2) frame_buffer[h][w] = " ";
+
+			//sidebar
+			if ((w == WINDOW_WIDTH / 2 - shop.sidebar_width) && (h > WINDOW_HEIGHT / 2 - shop.height / 2 + 1 && h < WINDOW_HEIGHT / 2 + shop.height / 2 - 1)) frame_buffer[h][w] = "|";
+		}
+	}
+
+	int i = 0, temp = 0;
+	for (const auto& sb_opt: shop.sidebar_options) {
+		for (int c = 0; c < (int)sb_opt.size(); c++) {
+			frame_buffer[WINDOW_HEIGHT / 2 - shop.height / 2 + temp + 3][WINDOW_WIDTH / 2 - shop.width / 2 + shop.sidebar_width - 3 - sb_opt.size() / 2 + c] = sb_opt[c];
+		}
+
+		if (i == shop.selected) {
+			frame_buffer[WINDOW_HEIGHT / 2 - shop.height / 2 + temp + 3][WINDOW_WIDTH / 2 - shop.width / 2 + shop.sidebar_width - 3 - sb_opt.size() / 2 - 1] = ">";
+		} else {
+			frame_buffer[WINDOW_HEIGHT / 2 - shop.height / 2 + temp + 3][WINDOW_WIDTH / 2 - shop.width / 2 + shop.sidebar_width - 3 - sb_opt.size() / 2 - 1] = " ";
+		}
+		temp += shop.sidebar_height / ((int)shop.sidebar_options.size());
 		i++;
 	}
 }
