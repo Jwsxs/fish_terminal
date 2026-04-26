@@ -18,15 +18,6 @@
 
 std::string frame_buffer[WINDOW_HEIGHT][WINDOW_WIDTH];
 
-struct BubbleText {
-	int x, y;
-	std::string text;
-
-	BubbleText(int x, int y, std::string text):
-		x(x), y(y),
-		text(text) {}
-};
-
 int main() {
 	std::random_device dev;
 	std::mt19937 rng(dev());
@@ -168,7 +159,7 @@ int main() {
 		if (shop.shop_mode) draw_shop(shop);
 		render_framebuffer();
 		// usleep(64 * 1000); // -> 15 fps //? POSIX -> LESS SAFE THAN ↓
-		std::this_thread::sleep_for(std::chrono::milliseconds(64)); //? MORE PORTABLE -> safer for portability and type safety
+		std::this_thread::sleep_for(std::chrono::milliseconds(1)); //? MORE PORTABLE -> safer for portability and type safety
 		//https://stackoverflow.com/questions/48383565/usleep-vs-stdthis-threadsleep-for-when-write-read-on-a-linux-serial-port
 	}
 
