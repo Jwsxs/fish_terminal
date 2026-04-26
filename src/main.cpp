@@ -42,10 +42,28 @@ int main() {
 
 		if ((int)fishes.size() < max_fishes) {
 			if (fish_spawn_cooldown <= 0) {
-				fish_spawn_cooldown = (rand() % 1) * 10;
+				Fish f = Fish::create(1, 1);
+				f.fish_health = std::uniform_int_distribution<std::mt19937::result_type>(0, 35)(rng);
+				
+				int r = std::uniform_int_distribution<std::mt19937::result_type>(1, 100)(rng);
+				if (r == 100) f.rarity = 4; // ciano
+				else if (r > 95) f.rarity = 3; // roxo
+				else if (r > 80) f.rarity = 2; // amarelo
+				else if (r > 65) f.rarity = 1; // verde
+				else f.rarity = 0; // vermelho
+
 				std::uniform_int_distribution<std::mt19937::result_type> rw(2, 14);
+				f.width = rw(rng);
+
 				std::uniform_int_distribution<std::mt19937::result_type> rh(2, 6);
-				fishes.push_back(Fish::create(rw(rng), rh(rng)));
+				f.height = rh(rng);
+
+				int color = 101 + f.rarity;
+				f.color = (color >= 104) ? color + 1 : color;
+
+				fishes.push_back(f);
+
+				fish_spawn_cooldown = (rand() % 1) * 10; // entre 1 e 100 e aí 100 -> 100ms e 10000ms
 			}
 			fish_spawn_cooldown--;
 		}

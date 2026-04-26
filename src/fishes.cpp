@@ -16,18 +16,12 @@ std::vector<std::string> CHARS = {
 
 Fish::Fish(int w, int h):
 	fish_char(CHARS[rand() % CHARS.size()]),
-	x(WINDOW_WIDTH / 2), y(WINDOW_HEIGHT / 2),
-	dx(0), dy(0),
+	x(rand() % WINDOW_WIDTH), y(rand() % WINDOW_HEIGHT),
 	width(w), height(h),
-	fish_health(rand() % (w + h / 2) + 20),
 	curnt_health(fish_health),
 	//target_x(x), target_y(y),
 	money_cooldown(rand() % 500), 
 	money_text(0), money_text_cooldown(30) {
-	// evita que a cor do peixe seja igual a da agua (104)
-	do {
-		color = 100 + rand() % 8;
-	} while (color == 104);
 };
 
 Fish Fish::create(int w, int h) { return Fish(w, h); }
@@ -74,7 +68,7 @@ float Fish::giveMoney() {
 
 	tx = x;
 	ty = y;
-	return (rand() % 100) / 100.0f;
+	return ((rand() % 5) / 100.0f) * (rarity + 1);
 }
 
 void feed_fishes(std::vector<Fish>& fishes, float& total_money) {
