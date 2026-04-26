@@ -8,6 +8,7 @@ extern std::vector<std::string> CHARS;
 class Fish {
 public:
 	std::string fish_char;
+	int rarity;
 	int color;
 	int x, y;
 	float dx, dy;
