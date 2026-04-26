@@ -1,5 +1,11 @@
 #include <string>
 #include <vector>
+#include <cstdint>
+
+#include <random>
+
+std::random_device dev;
+std::mt19937 rng(dev());
 
 #ifndef CONF_H
 #define CONF_H

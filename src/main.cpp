@@ -5,7 +5,6 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
-#include <random>
 
 //set config file for some global vars
 #include "conf.h"
@@ -19,8 +18,6 @@
 std::string frame_buffer[WINDOW_HEIGHT][WINDOW_WIDTH];
 
 int main() {
-	std::random_device dev;
-	std::mt19937 rng(dev());
 	Menu menu;
 	Shop shop;
 
