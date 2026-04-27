@@ -21,6 +21,9 @@ int main() {
 	Menu menu;
 	Shop shop;
 
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	
 	float total_money = 0.0f;
 
 	int max_fishes = 10;

@@ -1,5 +1,7 @@
 #include "conf.h"
 
+#include "item.h"
+
 #ifndef SHOP_H
 #define SHOP_H
 
@@ -12,6 +14,8 @@ struct Shop {
 
 	std::vector<std::string> sidebar_options;
 
+	std::vector<Item> shop_items;
+	
 	Shop();
 };
 
